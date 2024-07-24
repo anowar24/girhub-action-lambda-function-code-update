@@ -1,0 +1,38 @@
+name: Deploy Python Lambda
+
+on:
+  push:
+    branches: [ prod ]  # Update branch(es) to trigger deployment
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # Or adjust for your preferred runner environment
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Python 3.9
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+
+      # - name: Install dependencies
+      #   run: pip install -r requirements.txt  # Adjust based on your requirements file
+
+      # - name: Build Lambda function (adjust based on your build process)
+      #   run: python build.py  # Or your build script name
+
+      - name: Package for deployment
+        run: zip -r lambda_function.zip .  # Zips everything in the current directory
+
+      - name: Configure AWS credentials (using Secrets Manager)
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} # store in github repo settings > secrets and variables > actions > repo secrets
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}  # store in github repo settings > secrets and variables > actions > repo secrets
+          aws-region: ${{ secrets.AWS_REGION }} # store in github repo settings > secrets and variables > actions > repo secrets
+
+      - name: Deploy to Lambda
+        run: aws lambda update-function-code --function-name <<Replace-Me-with-Lambda-Name>> --zip-file fileb://lambda_function.zip --region ${{ secrets.AWS_REGION }}
+          
+
